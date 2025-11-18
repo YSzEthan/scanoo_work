@@ -5,6 +5,8 @@ import { type Idea } from '@/lib/supabase'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
+type CardMode = 'view' | 'edit' | 'delete-confirm'
+
 interface IdeaCardProps {
   idea: Idea
   onUpdate: (id: string, content: string) => Promise<boolean>
@@ -12,10 +14,9 @@ interface IdeaCardProps {
 }
 
 export default function IdeaCard({ idea, onUpdate, onDelete }: IdeaCardProps) {
-  const [isEditing, setIsEditing] = useState(false)
+  const [mode, setMode] = useState<CardMode>('view')
   const [editContent, setEditContent] = useState(idea.content)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   // 格式化日期
   const formatDate = (dateString: string) => {
@@ -32,7 +33,7 @@ export default function IdeaCard({ idea, onUpdate, onDelete }: IdeaCardProps) {
   // 處理更新
   const handleUpdate = async () => {
     if (!editContent.trim() || editContent === idea.content) {
-      setIsEditing(false)
+      setMode('view')
       setEditContent(idea.content)
       return
     }
@@ -42,7 +43,7 @@ export default function IdeaCard({ idea, onUpdate, onDelete }: IdeaCardProps) {
     setIsSubmitting(false)
 
     if (success) {
-      setIsEditing(false)
+      setMode('view')
     }
   }
 
@@ -51,18 +52,18 @@ export default function IdeaCard({ idea, onUpdate, onDelete }: IdeaCardProps) {
     setIsSubmitting(true)
     await onDelete(idea.id)
     setIsSubmitting(false)
-    setShowDeleteConfirm(false)
+    setMode('view')
   }
 
   // 取消編輯
   const handleCancelEdit = () => {
-    setIsEditing(false)
+    setMode('view')
     setEditContent(idea.content)
   }
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-      {isEditing ? (
+      {mode === 'edit' ? (
         // 編輯模式
         <div className="space-y-3">
           <textarea
@@ -92,7 +93,7 @@ export default function IdeaCard({ idea, onUpdate, onDelete }: IdeaCardProps) {
             </button>
           </div>
         </div>
-      ) : showDeleteConfirm ? (
+      ) : mode === 'delete-confirm' ? (
         // 刪除確認模式
         <div className="space-y-4">
           <p className="text-gray-800 text-lg">確定要刪除這個想法嗎？</p>
@@ -102,7 +103,7 @@ export default function IdeaCard({ idea, onUpdate, onDelete }: IdeaCardProps) {
           <div className="flex gap-2 justify-end">
             <button
               type="button"
-              onClick={() => setShowDeleteConfirm(false)}
+              onClick={() => setMode('view')}
               disabled={isSubmitting}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
@@ -126,20 +127,20 @@ export default function IdeaCard({ idea, onUpdate, onDelete }: IdeaCardProps) {
               remarkPlugins={[remarkGfm]}
               components={{
                 // 自訂樣式：移除 p 標籤的底部邊距
-                p: ({...props}: any) => <p className="mb-2 last:mb-0" {...props} />,
+                p: (props) => <p className="mb-2 last:mb-0" {...props} />,
                 // 標題樣式
-                h1: ({...props}: any) => <h1 className="text-xl font-bold mb-2" {...props} />,
-                h2: ({...props}: any) => <h2 className="text-lg font-bold mb-2" {...props} />,
-                h3: ({...props}: any) => <h3 className="text-base font-bold mb-1" {...props} />,
+                h1: (props) => <h1 className="text-xl font-bold mb-2" {...props} />,
+                h2: (props) => <h2 className="text-lg font-bold mb-2" {...props} />,
+                h3: (props) => <h3 className="text-base font-bold mb-1" {...props} />,
                 // 程式碼區塊
-                code: ({className, ...props}: any) => {
+                code: ({ className, ...props }) => {
                   const isInline = !className?.includes('language-')
                   return isInline
                     ? <code className="px-1.5 py-0.5 bg-gray-100 rounded text-sm" {...props} />
                     : <code className="block p-3 bg-gray-100 rounded text-sm overflow-x-auto" {...props} />
                 },
                 // 連結樣式
-                a: ({...props}: any) => <a className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
+                a: (props) => <a className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
               }}
             >
               {idea.content}
@@ -165,7 +166,7 @@ export default function IdeaCard({ idea, onUpdate, onDelete }: IdeaCardProps) {
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => setIsEditing(true)}
+                onClick={() => setMode('edit')}
                 className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                 title="編輯"
               >
@@ -185,7 +186,7 @@ export default function IdeaCard({ idea, onUpdate, onDelete }: IdeaCardProps) {
               </button>
               <button
                 type="button"
-                onClick={() => setShowDeleteConfirm(true)}
+                onClick={() => setMode('delete-confirm')}
                 className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                 title="刪除"
               >

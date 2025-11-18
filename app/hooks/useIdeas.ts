@@ -58,26 +58,14 @@ export function useIdeas() {
     }
 
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('ideas')
         .insert([{ content: content.trim() }])
-        .select()
 
       if (error) throw error
 
-      // 如果在第一頁，直接將新想法加到列表頂部
-      if (currentPage === 1 && data && data[0]) {
-        setIdeas(prevIdeas => {
-          const newIdeas = [data[0], ...prevIdeas]
-          // 保持每頁最多 ITEMS_PER_PAGE 項
-          return newIdeas.slice(0, ITEMS_PER_PAGE)
-        })
-        setTotalCount(prev => prev + 1)
-      } else {
-        // 如果不在第一頁，重新載入當前頁
-        fetchIdeas(currentPage)
-      }
-
+      // 統一處理：總是重新載入當前頁
+      await fetchIdeas(currentPage)
       toast.success('想法已新增！')
       return true
     } catch (error) {

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useIdeas } from '@/app/hooks/useIdeas'
 import IdeaCard from '@/app/components/IdeaCard'
 import IdeaCardSkeleton from '@/app/components/IdeaCardSkeleton'
+import { getPaginationPages } from '@/app/utils/pagination'
 
 export default function Home() {
   const [newIdea, setNewIdea] = useState('')
@@ -148,39 +149,26 @@ export default function Home() {
                   </button>
 
                   <div className="flex items-center gap-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                      // 只顯示當前頁面附近的頁碼
-                      if (
-                        page === 1 ||
-                        page === totalPages ||
-                        (page >= currentPage - 2 && page <= currentPage + 2)
-                      ) {
-                        return (
-                          <button
-                            type="button"
-                            key={page}
-                            onClick={() => goToPage(page)}
-                            className={`px-4 py-2 text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all ${
-                              page === currentPage
-                                ? 'bg-blue-600 text-white'
-                                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-                            }`}
-                          >
-                            {page}
-                          </button>
-                        )
-                      } else if (
-                        page === currentPage - 3 ||
-                        page === currentPage + 3
-                      ) {
-                        return (
-                          <span key={page} className="px-2 text-gray-500">
-                            ...
-                          </span>
-                        )
-                      }
-                      return null
-                    })}
+                    {getPaginationPages(currentPage, totalPages).map((item, idx) =>
+                      item === 'ellipsis' ? (
+                        <span key={`ellipsis-${idx}`} className="px-2 text-gray-500">
+                          ...
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          key={item}
+                          onClick={() => goToPage(item)}
+                          className={`px-4 py-2 text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all ${
+                            item === currentPage
+                              ? 'bg-blue-600 text-white'
+                              : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          {item}
+                        </button>
+                      )
+                    )}
                   </div>
 
                   <button
