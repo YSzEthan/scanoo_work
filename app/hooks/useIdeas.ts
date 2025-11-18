@@ -64,8 +64,8 @@ export function useIdeas() {
 
       if (error) throw error
 
-      // 統一處理：總是重新載入當前頁
-      await fetchIdeas(currentPage)
+      // 新增後跳到第一頁，讓用戶看到新內容
+      await fetchIdeas(1)
       toast.success('想法已新增！')
       return true
     } catch (error) {
@@ -73,7 +73,7 @@ export function useIdeas() {
       toast.error('新增失敗，請稍後再試')
       return false
     }
-  }, [currentPage, fetchIdeas, toast])
+  }, [fetchIdeas, toast])
 
   // 更新想法
   const updateIdea = useCallback(async (id: string, content: string) => {
@@ -95,13 +95,8 @@ export function useIdeas() {
 
       if (error) throw error
 
-      // 更新本地狀態
-      setIdeas(prevIdeas =>
-        prevIdeas.map(idea =>
-          idea.id === id ? { ...idea, content: content.trim() } : idea
-        )
-      )
-
+      // 統一策略：重新載入當前頁以確保數據一致性
+      await fetchIdeas(currentPage)
       toast.success('想法已更新！')
       return true
     } catch (error) {
@@ -109,7 +104,7 @@ export function useIdeas() {
       toast.error('更新失敗，請稍後再試')
       return false
     }
-  }, [toast])
+  }, [currentPage, fetchIdeas, toast])
 
   // 刪除想法
   const deleteIdea = useCallback(async (id: string) => {
@@ -121,16 +116,9 @@ export function useIdeas() {
 
       if (error) throw error
 
-      // 如果刪除後當前頁沒有資料且不是第一頁，回到前一頁
-      const remainingItems = ideas.length - 1
-      if (remainingItems === 0 && currentPage > 1) {
-        fetchIdeas(currentPage - 1)
-      } else {
-        // 更新本地狀態
-        setIdeas(prevIdeas => prevIdeas.filter(idea => idea.id !== id))
-        setTotalCount(prev => prev - 1)
-      }
-
+      // 統一策略：永遠重新抓取
+      // 刪除後重新載入當前頁，如果當前頁空了，fetchIdeas 會自動處理
+      await fetchIdeas(currentPage)
       toast.success('想法已刪除')
       return true
     } catch (error) {
@@ -138,7 +126,7 @@ export function useIdeas() {
       toast.error('刪除失敗，請稍後再試')
       return false
     }
-  }, [ideas.length, currentPage, fetchIdeas, toast])
+  }, [currentPage, fetchIdeas, toast])
 
   // 切換頁面
   const goToPage = useCallback((page: number) => {
